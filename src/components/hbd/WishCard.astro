@@ -1,0 +1,18 @@
+---
+/** Presentational styles for wish cards; list is rendered client-side from API. */
+---
+
+<template id="wish-card-template">
+	<article
+		class="wish-card pointer-events-auto absolute w-[min(220px,42vw)] rounded-sm bg-[#fffef8] p-3 shadow-[4px_4px_0_0_rgba(10,10,10,0.08)] ring-1 ring-ink/10"
+		style="transform: rotate(var(--rot, 0deg));"
+	>
+		<header class="flex items-baseline justify-between gap-2">
+			<h3 class="wish-card-name font-sans text-sm font-semibold text-ink"></h3>
+			<time class="wish-card-time font-sans text-[10px] text-muted"></time>
+		</header>
+		<p class="wish-card-message mt-2 font-sans text-xs leading-relaxed text-ink/90"></p>
+		<div class="wish-card-stickers relative mt-2 h-16 w-full rounded bg-placeholder/30"></div>
+		<img class="wish-card-drawing mt-2 hidden max-h-24 w-full rounded border border-ink/10 object-contain" alt="" />
+	</article>
+</template>

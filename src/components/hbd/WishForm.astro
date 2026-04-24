@@ -1,0 +1,41 @@
+---
+---
+
+<form id="wish-form" class="space-y-4 rounded-lg border border-ink/10 bg-shell p-3">
+	<div>
+		<label for="wish-name" class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase">
+			Name
+		</label>
+		<input
+			id="wish-name"
+			name="name"
+			type="text"
+			maxlength="100"
+			required
+			class="mt-1 w-full rounded border border-ink/15 bg-page px-3 py-2 font-sans text-sm text-ink outline-none ring-0 focus:border-ink/40"
+			autocomplete="name"
+		/>
+	</div>
+	<div>
+		<label for="wish-message" class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase">
+			Message
+		</label>
+		<textarea
+			id="wish-message"
+			name="message"
+			maxlength="280"
+			required
+			rows="4"
+			class="mt-1 w-full resize-none rounded border border-ink/15 bg-page px-3 py-2 font-sans text-sm text-ink outline-none focus:border-ink/40"
+		></textarea>
+		<p id="wish-char-count" class="mt-1 text-right font-sans text-[10px] text-muted">0 / 280</p>
+	</div>
+	<p id="wish-form-status" class="hidden font-sans text-xs" role="status"></p>
+	<button
+		type="submit"
+		id="wish-submit"
+		class="w-full rounded bg-ink py-3 font-sans text-sm font-medium tracking-wide text-shell transition hover:bg-ink/90"
+	>
+		Send wish
+	</button>
+</form>
