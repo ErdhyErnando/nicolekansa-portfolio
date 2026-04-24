@@ -256,10 +256,12 @@ KV / rate limits: prefer `wrangler dev` with remote bindings or preview namespac
 
 ## 6. Cloudflare Web Analytics
 
-1. Dashboard → **Web Analytics** → add site / get snippet.
-2. Inject snippet in a **base layout** or `src/layouts/Layout.astro` so it runs on `/` and `/hbd`.
+1. Dashboard → **Web Analytics** → add site / copy the **token** from the snippet (the value inside `data-cf-beacon`).
+2. The project **already** injects the beacon from `import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN` in `src/layouts/Layout.astro` (no need to paste the full HTML snippet).
+3. **Local:** set `PUBLIC_CF_WEB_ANALYTICS_TOKEN=...` in `.env` (see `.env.example`).
+4. **GitHub Actions:** add a repository secret named `PUBLIC_CF_WEB_ANALYTICS_TOKEN` with the same value. The `deploy` workflow passes it to `pnpm build` so the client bundle includes the script.
 
-No cookie banner needed for standard CF Web Analytics setup — still verify your legal/privacy copy when you go live.
+The token is sent to browsers anyway; a secret is mainly to keep it out of the repo. No cookie banner needed for standard CF Web Analytics — still verify your legal/privacy copy when you go live.
 
 ---
 
