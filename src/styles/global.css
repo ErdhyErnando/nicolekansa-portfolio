@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+@theme {
+	--color-shell: #ffffff;
+	--color-page: #faf9f7;
+	--color-ink: #0a0a0a;
+	--color-muted: #6b6b6b;
+	--color-placeholder: #e8e8e8;
+	--font-display: "Cormorant Garamond", ui-serif, Georgia, serif;
+	--font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+	@apply bg-shell text-ink antialiased;
+	font-family: var(--font-sans);
+}
+
+.font-display {
+	font-family: var(--font-display);
+}
+
+/* High-contrast Didone masthead (editorial / Vogue-adjacent) */
+.font-masthead {
+	font-family: 'Bodoni Moda', var(--font-display), ui-serif, Georgia, serif;
+	font-optical-sizing: auto;
+}

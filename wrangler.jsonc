@@ -1,6 +1,6 @@
 {
 	"compatibility_date": "2026-04-23",
-	"compatibility_flags": ["global_fetch_strictly_public"],
+	"compatibility_flags": ["global_fetch_strictly_public", "nodejs_compat"],
 	"name": "nicolekansa-portfolio",
 	"main": "@astrojs/cloudflare/entrypoints/server",
 	"assets": {
@@ -10,13 +10,20 @@
 	"observability": {
 		"enabled": true
 	},
-	  "kv_namespaces": [
-    {
-      "binding": "KV",
-      "id": "8d5548ad31ff4463ac575626732cd036",
-      
-      // Optional: preview_id used when running `wrangler dev` for local dev
-      "preview_id": "<ID_OF_PREVIEW_KV_NAMESPACE_FOR_LOCAL_DEVELOPMENT>"
-    }
-  ]
+	"kv_namespaces": [
+		{
+			"binding": "KV",
+			"id": "8d5548ad31ff4463ac575626732cd036"
+		}
+	],
+	"ratelimits": [
+		{
+			"name": "WISH_RATE_LIMITER",
+			"namespace_id": "1001",
+			"simple": {
+				"limit": 10,
+				"period": 60
+			}
+		}
+	]
 }
