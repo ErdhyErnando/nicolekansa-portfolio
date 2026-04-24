@@ -1,0 +1,64 @@
+---
+interface Props {
+  topSrc?: string;
+  bottomSrc?: string;
+  mirrorTop?: boolean;
+  topObjectPosition?: string;
+  bottomObjectPosition?: string;
+}
+
+const {
+  topSrc = "/images/magazine/gallery-1.webp",
+  bottomSrc = "/images/magazine/gallery-2.webp",
+  mirrorTop = true,
+  topObjectPosition = "",
+  bottomObjectPosition = "object-[50%_40%]",
+} = Astro.props;
+
+const topBase = mirrorTop
+  ? "absolute inset-0 h-full w-full object-cover scale-x-[-1]"
+  : "absolute inset-0 h-full w-full object-cover";
+
+const topImgClass = [topBase, topObjectPosition].filter(Boolean).join(" ");
+
+const bottomImgClass = [
+  "absolute inset-0 h-full w-full object-cover scale-x-[-1]",
+  bottomObjectPosition,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div
+  class="grid h-full grid-rows-2 gap-2 bg-page p-4"
+  style="min-height: 100%;"
+>
+  <div class="relative h-full min-h-0 overflow-hidden bg-placeholder">
+    <img
+      src={topSrc}
+      alt=""
+      class={topImgClass}
+      loading="lazy"
+      onerror="this.remove()"
+    />
+    <span
+      class="pointer-events-none absolute bottom-2 right-2 font-sans text-[10px] tracking-widest text-muted uppercase"
+    >
+      © 2-up
+    </span>
+  </div>
+  <div class="relative h-full min-h-0 overflow-hidden bg-placeholder">
+    <img
+      src={bottomSrc}
+      alt=""
+      class={bottomImgClass}
+      loading="lazy"
+      onerror="this.remove()"
+    />
+    <span
+      class="pointer-events-none absolute bottom-2 right-2 font-sans text-[10px] tracking-widest text-muted uppercase"
+    >
+      © 2-up
+    </span>
+  </div>
+</div>

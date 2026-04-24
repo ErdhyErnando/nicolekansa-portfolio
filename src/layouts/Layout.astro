@@ -1,0 +1,56 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  preloadCover?: boolean;
+}
+
+const {
+  title = "Nicole Kansa",
+  description = "Portfolio — Nicole Kansa",
+  preloadCover = false,
+} = Astro.props;
+
+const cfBeacon = import.meta.env.PUBLIC_CF_WEB_ANALYTICS_TOKEN;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,600;0,6..96,700;0,6..96,800;1,6..96,600&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap"
+      rel="stylesheet"
+    />
+
+    {
+      preloadCover && (
+        <link rel="preload" as="image" href="/images/magazine/cover.webp" />
+      )
+    }
+
+    {
+      cfBeacon && (
+        <script
+          is:inline
+          defer
+          src="https://static.cloudflareinsights.com/beacon.min.js"
+          data-cf-beacon={JSON.stringify({ token: cfBeacon })}
+        />
+      )
+    }
+  </head>
+  <body class="min-h-dvh bg-shell">
+    <slot />
+  </body>
+</html>

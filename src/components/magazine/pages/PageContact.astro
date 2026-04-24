@@ -1,0 +1,56 @@
+---
+const email = "nicolekansaakb@gmail.com";
+const instagram = "https://instagram.com/@nicolekansa";
+const whatsapp = "https://wa.me/6287719251976";
+---
+
+<div
+  class="flex h-full flex-col justify-between bg-page p-8 text-ink"
+  style="min-height: 100%;"
+>
+  <div>
+    <p
+      class="font-sans text-[10px] font-medium tracking-[0.25em] text-muted uppercase"
+    >
+      Contact
+    </p>
+    <h2 class="font-display mt-2 text-3xl font-semibold">Get in touch</h2>
+    <address class="mt-10 not-italic">
+      <ul class="space-y-6 font-sans text-sm font-medium leading-snug">
+        <li>
+          <a
+            href={`mailto:${email}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="border-b border-ink/30 pb-0.5 transition hover:border-ink"
+          >
+            {email}
+          </a>
+        </li>
+        <li>
+          <a
+            href={instagram}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="border-b border-ink/30 pb-0.5 transition hover:border-ink"
+          >
+            Instagram
+          </a>
+        </li>
+        <li>
+          <a
+            href={whatsapp}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="border-b border-ink/30 pb-0.5 transition hover:border-ink"
+          >
+            WhatsApp
+          </a>
+        </li>
+      </ul>
+    </address>
+  </div>
+  <p class="font-sans text-[10px] tracking-widest text-muted uppercase">
+    Representation inquiries welcome
+  </p>
+</div>

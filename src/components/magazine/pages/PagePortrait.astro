@@ -1,0 +1,33 @@
+---
+interface Props {
+  src?: string;
+  creditLabel?: string;
+}
+
+const {
+  src = "/images/magazine/portrait.webp",
+  creditLabel = "Portrait © placeholder",
+} = Astro.props;
+---
+
+<div
+  class="relative h-full w-full overflow-hidden bg-page"
+  style="min-height: 100%;"
+>
+  <div class="absolute inset-0 z-0 bg-placeholder" aria-hidden="true">
+    <span
+      class="absolute bottom-4 right-4 font-sans text-xs tracking-widest text-muted uppercase"
+    >
+      {creditLabel}
+    </span>
+  </div>
+  <img
+    src={src}
+    alt=""
+    width="450"
+    height="643"
+    class="absolute inset-0 z-1 h-full w-full object-cover"
+    loading="lazy"
+    onerror="this.remove()"
+  />
+</div>

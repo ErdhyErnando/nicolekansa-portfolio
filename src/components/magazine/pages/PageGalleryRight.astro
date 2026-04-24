@@ -1,0 +1,45 @@
+---
+interface Props {
+  topSrc?: string;
+  bottomSrc?: string;
+}
+
+const {
+  topSrc = "/images/magazine/gallery-3.webp",
+  bottomSrc = "/images/magazine/gallery-4.webp",
+} = Astro.props;
+---
+
+<div
+  class="grid h-full grid-rows-2 gap-2 bg-page p-4"
+  style="min-height: 100%;"
+>
+  <div class="relative h-full min-h-0 overflow-hidden bg-placeholder">
+    <img
+      src={topSrc}
+      alt=""
+      class="absolute inset-0 h-full w-full object-cover object-[50%_35%]"
+      loading="lazy"
+      onerror="this.remove()"
+    />
+    <span
+      class="pointer-events-none absolute bottom-2 right-2 font-sans text-[10px] tracking-widest text-muted uppercase"
+    >
+      © 2-up
+    </span>
+  </div>
+  <div class="relative h-full min-h-0 overflow-hidden bg-placeholder">
+    <img
+      src={bottomSrc}
+      alt=""
+      class="absolute inset-0 h-full w-full object-cover object-[50%_65%]"
+      loading="lazy"
+      onerror="this.remove()"
+    />
+    <span
+      class="pointer-events-none absolute bottom-2 right-2 font-sans text-[10px] tracking-widest text-muted uppercase"
+    >
+      © 2-up
+    </span>
+  </div>
+</div>

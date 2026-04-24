@@ -1,0 +1,125 @@
+---
+import PageCover from "./pages/PageCover.astro";
+import PageContents from "./pages/PageContents.astro";
+import PageBio from "./pages/PageBio.astro";
+import PagePortrait from "./pages/PagePortrait.astro";
+import PageGalleryLeft from "./pages/PageGalleryLeft.astro";
+import PageGalleryRight from "./pages/PageGalleryRight.astro";
+import PageCreditsLeft from "./pages/PageCreditsLeft.astro";
+import PageCreditsRight from "./pages/PageCreditsRight.astro";
+import PageContact from "./pages/PageContact.astro";
+import PageBackCover from "./pages/PageBackCover.astro";
+---
+
+<div
+  class="flex w-full max-w-[min(100vw-2rem,900px)] justify-center drop-shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
+>
+  <div id="magazine-flip" class="w-full">
+    <div class="page" data-density="hard">
+      <PageCover />
+    </div>
+    <div class="page" data-density="soft">
+      <PageContents />
+    </div>
+    <div class="page" data-density="soft">
+      <PageBio />
+    </div>
+    <div class="page" data-density="soft">
+      <PagePortrait />
+    </div>
+    <div class="page" data-density="soft">
+      <PageGalleryLeft />
+    </div>
+    <div class="page" data-density="soft">
+      <PageGalleryRight />
+    </div>
+    <div class="page" data-density="soft">
+      <PagePortrait
+        src="/images/magazine/portrait-2.webp"
+        creditLabel="Portrait © placeholder"
+      />
+    </div>
+    <div class="page" data-density="soft">
+      <PageGalleryLeft
+        topSrc="/images/magazine/gallery-5.webp"
+        bottomSrc="/images/magazine/gallery-6.webp"
+        mirrorTop={false}
+        topObjectPosition="object-[50%_30%]"
+      />
+    </div>
+    <div class="page" data-density="soft">
+      <PageCreditsLeft />
+    </div>
+    <div class="page" data-density="soft">
+      <PageCreditsRight />
+    </div>
+    <div class="page" data-density="soft">
+      <PageContact />
+    </div>
+    <div class="page" data-density="hard">
+      <PageBackCover />
+    </div>
+  </div>
+</div>
+
+<script>
+  import { PageFlip } from "page-flip";
+
+  function initMagazine() {
+    const block = document.getElementById("magazine-flip");
+    if (!block) return;
+
+    const pages = block.querySelectorAll(".page");
+    const pageFlip = new PageFlip(block, {
+      width: 450,
+      height: 643,
+      size: "stretch",
+      minWidth: 280,
+      maxWidth: 450,
+      minHeight: 400,
+      maxHeight: 643,
+      showCover: true,
+      usePortrait: true,
+      drawShadow: true,
+      mobileScrollSupport: true,
+      flippingTime: 900,
+      startPage: 0,
+    });
+
+    pageFlip.loadFromHTML(pages);
+
+    const onTocClick = (e: MouseEvent) => {
+      const el = (e.target as HTMLElement | null)?.closest(
+        "[data-magazine-page]",
+      );
+      if (!el || !block.contains(el)) return;
+      const raw = el.getAttribute("data-magazine-page");
+      if (raw === null) return;
+      const idx = Number.parseInt(raw, 10);
+      if (!Number.isFinite(idx) || idx < 0 || idx >= pageFlip.getPageCount())
+        return;
+      e.preventDefault();
+      pageFlip.turnToPage(idx);
+    };
+
+    block.addEventListener("click", onTocClick);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") {
+        e.preventDefault();
+        pageFlip.flipNext("top");
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        pageFlip.flipPrev("top");
+      }
+    };
+
+    window.addEventListener("keydown", onKey);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initMagazine, { once: true });
+  } else {
+    initMagazine();
+  }
+</script>
