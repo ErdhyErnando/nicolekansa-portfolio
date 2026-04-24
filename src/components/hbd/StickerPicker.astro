@@ -1,9 +1,10 @@
 ---
 const stickers = [
-	{ id: 'sticker-a', label: 'Sticker A' },
-	{ id: 'sticker-b', label: 'Sticker B' },
-	{ id: 'sticker-c', label: 'Sticker C' },
-	{ id: 'sticker-d', label: 'Sticker D' }
+	{ id: "sticker-a", label: "Sticker A" },
+	{ id: "sticker-b", label: "Sticker B" },
+	{ id: "sticker-c", label: "Sticker C" },
+	{ id: "sticker-d", label: "Sticker D" },
+	{ id: "sticker-e", label: "Sticker E" },
 ];
 ---
 
@@ -11,17 +12,26 @@ const stickers = [
 	<p class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase">
 		Stickers
 	</p>
-	<p class="mt-1 font-sans text-xs text-muted">Select one, then tap the board to place.</p>
-	<div id="sticker-picker" class="mt-3 grid grid-cols-4 gap-2">
+	<p class="mt-1 font-sans text-xs text-muted">
+		Select a stamp, tap the board to place, then use − + on the sticker to resize. Tap the
+		same stamp again to cancel, or use brush/eraser to draw.
+	</p>
+	<div id="sticker-picker" class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
 		{
 			stickers.map((s) => (
 				<button
 					type="button"
-					class="sticker-choice flex aspect-square flex-col items-center justify-center rounded border border-ink/15 bg-placeholder p-1 font-sans text-[9px] font-medium tracking-wide text-muted uppercase transition hover:border-ink/40"
+					class="sticker-choice flex aspect-square items-center justify-center overflow-hidden rounded border border-ink/15 bg-page p-0.5 transition hover:border-ink/40"
 					data-sticker-id={s.id}
-					data-sticker-src=""
+					aria-label={s.label}
 				>
-					{s.label}
+					<img
+						src={`/stickers/${s.id}.webp`}
+						alt=""
+						class="h-full w-full object-contain"
+						loading="lazy"
+						draggable="false"
+					/>
 				</button>
 			))
 		}

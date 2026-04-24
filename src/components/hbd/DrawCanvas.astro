@@ -1,9 +1,20 @@
 ---
+const brushSwatches = [
+	{ color: "#0a0a0a", label: "Black" },
+	{ color: "#be123c", label: "Rose" },
+	{ color: "#c2410c", label: "Burnt orange" },
+	{ color: "#a16207", label: "Amber" },
+	{ color: "#15803d", label: "Green" },
+	{ color: "#0d9488", label: "Teal" },
+	{ color: "#1d4ed8", label: "Blue" },
+	{ color: "#6d28d9", label: "Violet" },
+	{ color: "#9d174d", label: "Magenta" },
+] as const;
 ---
 
 <div class="rounded-lg border border-ink/10 bg-shell p-3">
 	<p class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase">
-		Sketch
+		Drawing tools
 	</p>
 	<div class="mt-2 flex flex-wrap gap-2">
 		<button
@@ -28,10 +39,79 @@
 			Clear
 		</button>
 	</div>
-	<canvas
-		id="wish-draw-canvas"
-		width="280"
-		height="160"
-		class="mt-3 w-full max-w-[280px] cursor-crosshair touch-none rounded border border-ink/10 bg-white"
-	></canvas>
+	<div class="mt-3">
+		<p
+			class="mb-1.5 font-sans text-[10px] font-medium tracking-widest text-muted uppercase"
+		>
+			Brush color
+		</p>
+		<div class="flex flex-wrap items-center gap-1.5" role="group" aria-label="Brush color">
+			{
+				brushSwatches.map(({ color, label }) => (
+					<button
+						type="button"
+						data-draw-swatch
+						data-color={color}
+						title={label}
+						aria-label={label}
+						aria-pressed="false"
+						class="draw-swatch h-6 w-6 shrink-0 rounded-md border-2 border-ink/10 transition hover:scale-105 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink/35"
+						style={{ backgroundColor: color }}
+					/>
+				))
+			}
+			<label
+				class="relative ml-0.5 h-6 w-6 cursor-pointer overflow-hidden rounded-md border border-ink/20 bg-page shadow-sm"
+				title="Custom color"
+			>
+				<span class="sr-only">Custom color</span>
+				<input
+					type="color"
+					id="draw-color-custom"
+					class="absolute inset-0 h-[200%] w-[200%] max-w-none -translate-x-1/4 -translate-y-1/4 cursor-pointer border-0 p-0 [color-scheme:light]"
+					value="#0a0a0a"
+					aria-label="Custom brush color"
+				/>
+			</label>
+		</div>
+	</div>
+	<div class="mt-3 space-y-2">
+		<div>
+			<div class="mb-1 flex items-center justify-between font-sans text-[11px] text-ink/90">
+				<span>Brush size</span>
+				<span id="draw-brush-size-value" class="tabular-nums text-muted">4</span>
+			</div>
+			<input
+				type="range"
+				id="draw-brush-size"
+				class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink/10 accent-ink"
+				min="1"
+				max="24"
+				value="4"
+			/>
+		</div>
+		<div>
+			<div class="mb-1 flex items-center justify-between font-sans text-[11px] text-ink/90">
+				<span>Eraser size</span>
+				<span id="draw-eraser-size-value" class="tabular-nums text-muted">10</span>
+			</div>
+			<input
+				type="range"
+				id="draw-eraser-size"
+				class="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-ink/10 accent-ink"
+				min="2"
+				max="40"
+				value="10"
+			/>
+		</div>
+	</div>
 </div>
+
+<style is:global>
+	/* Plain CSS: @apply can’t resolve ring-ink/50 in v4 without @reference to global.css. */
+	.draw-swatch[aria-pressed="true"] {
+		box-shadow:
+			0 0 0 2px var(--color-shell, #fff),
+			0 0 0 4px color-mix(in srgb, var(--color-ink) 55%, transparent);
+	}
+</style>

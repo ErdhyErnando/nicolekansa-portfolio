@@ -78,9 +78,16 @@ export const POST: APIRoute = async ({ request }) => {
 		const id = typeof o.id === 'string' ? o.id : '';
 		const x = typeof o.x === 'number' ? o.x : Number.NaN;
 		const y = typeof o.y === 'number' ? o.y : Number.NaN;
+		let scale = 1;
+		if (o.scale !== undefined) {
+			if (typeof o.scale !== 'number' || !Number.isFinite(o.scale)) continue;
+			scale = Math.min(2.5, Math.max(0.25, o.scale));
+		}
 		if (!id || !Number.isFinite(x) || !Number.isFinite(y)) continue;
 		if (x < 0 || x > 1 || y < 0 || y > 1) continue;
-		stickers.push({ id, x, y });
+		const entry: WishSticker = { id, x, y };
+		if (scale < 0.99 || scale > 1.01) entry.scale = scale;
+		stickers.push(entry);
 	}
 
 	if (drawing && drawing.length > MAX_BODY_BYTES) {

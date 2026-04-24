@@ -13,7 +13,8 @@ import WishCard from "./WishCard.astro";
   >
     <span
       class="text-lg leading-none transition-transform group-hover:-translate-x-0.5"
-      aria-hidden="true">←</span>
+      aria-hidden="true">←</span
+    >
     <span class="hidden sm:inline">Magazine</span>
   </a>
   <header class="mx-auto max-w-6xl text-center">
@@ -28,8 +29,8 @@ import WishCard from "./WishCard.astro";
       Wishes for Nicole
     </h1>
     <p class="mx-auto mt-3 max-w-lg font-sans text-sm text-muted">
-      Leave a note, doodle something small, and place a sticker. Everything
-      shows up on the board for everyone.
+      Leave a note, doodle, and add stickers on your personal whiteboard. It all
+      shows up on the main board for everyone.
     </p>
   </header>
 
@@ -55,23 +56,36 @@ import WishCard from "./WishCard.astro";
 
     <aside class="space-y-4 lg:sticky lg:top-8">
       <WishForm />
-      <div class="rounded-lg border border-dashed border-ink/20 bg-page/90 p-3">
-        <p
-          class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase"
-        >
-          Your sticker layout
-        </p>
-        <p class="mt-1 font-sans text-xs text-muted">
-          Tap below to place the selected sticker.
-        </p>
+      <div
+        class="space-y-3 rounded-lg border border-ink/10 bg-shell p-3 shadow-sm"
+      >
+        <div>
+          <p
+            class="font-sans text-[10px] font-medium tracking-widest text-muted uppercase"
+          >
+            Your wish board
+          </p>
+          <p class="mt-1 font-sans text-xs leading-relaxed text-muted">
+            Draw with the tools below. Pick a stamp, tap the board to place it,
+            then drag, resize (− +), or remove (×). Use brush or eraser anytime
+            — or tap the same stamp again to cancel placement.
+          </p>
+        </div>
         <div
           id="compose-board"
-          class="relative mt-3 h-40 w-full overflow-hidden rounded-lg border border-ink/10 bg-shell touch-none"
+          class="relative h-80 min-h-[200px] w-full touch-none overflow-hidden rounded-lg border border-ink/15 bg-white shadow-inner"
         >
+          <canvas
+            id="wish-draw-canvas"
+            class="absolute inset-0 z-1 h-full w-full cursor-crosshair touch-none"
+            width="1"
+            height="1"
+            aria-label="Doodle on your wish"
+          />
         </div>
+        <DrawCanvas />
+        <StickerPicker />
       </div>
-      <DrawCanvas />
-      <StickerPicker />
     </aside>
   </div>
 </div>
@@ -105,13 +119,37 @@ import WishCard from "./WishCard.astro";
   const btnBrush = document.getElementById("draw-tool-brush");
   const btnEraser = document.getElementById("draw-tool-eraser");
   const btnClear = document.getElementById("draw-clear");
+  const drawBrushSize = document.getElementById(
+    "draw-brush-size",
+  ) as HTMLInputElement | null;
+  const drawEraserSize = document.getElementById(
+    "draw-eraser-size",
+  ) as HTMLInputElement | null;
+  const drawBrushSizeVal = document.getElementById("draw-brush-size-value");
+  const drawEraserSizeVal = document.getElementById("draw-eraser-size-value");
+  const drawColorCustom = document.getElementById(
+    "draw-color-custom",
+  ) as HTMLInputElement | null;
+  const drawSwatches =
+    document.querySelectorAll<HTMLElement>("[data-draw-swatch]");
 
   let selectedStickerId: string | null = null;
   let drawingTool: "brush" | "eraser" = "brush";
   let isDrawing = false;
   let hasInk = false;
+  let brushColor = "#0a0a0a";
+  let brushSize = 4;
+  let eraserSize = 10;
+
+  function clearStickerSelection() {
+    selectedStickerId = null;
+    document.querySelectorAll(".sticker-choice").forEach((b) => {
+      b.classList.remove("ring-2", "ring-ink", "ring-offset-2");
+    });
+  }
 
   function setTool(t: "brush" | "eraser") {
+    clearStickerSelection();
     drawingTool = t;
     btnBrush?.classList.toggle("bg-page", t === "brush");
     btnBrush?.classList.toggle("font-medium", t === "brush");
@@ -119,17 +157,91 @@ import WishCard from "./WishCard.astro";
     btnEraser?.classList.toggle("font-medium", t === "eraser");
   }
 
+  function syncCanvasToLayout() {
+    if (!canvas || !composeBoard) return;
+    const dpr = window.devicePixelRatio || 1;
+    const r = composeBoard.getBoundingClientRect();
+    const nextW = Math.max(1, Math.round(r.width * dpr));
+    const nextH = Math.max(1, Math.round(r.height * dpr));
+    if (nextW < 1 || nextH < 1) return;
+    if (canvas.width === nextW && canvas.height === nextH) return;
+    const g0 = canvas.getContext("2d");
+    if (!g0) return;
+    const tmp = document.createElement("canvas");
+    tmp.width = canvas.width;
+    tmp.height = canvas.height;
+    if (tmp.width > 0 && tmp.height > 0) {
+      const tg = tmp.getContext("2d");
+      if (tg) tg.drawImage(canvas, 0, 0);
+    }
+    canvas.width = nextW;
+    canvas.height = nextH;
+    const g = canvas.getContext("2d");
+    if (g) {
+      g.lineCap = "round";
+      g.lineJoin = "round";
+      if (tmp.width > 0 && tmp.height > 0) {
+        g.drawImage(tmp, 0, 0, nextW, nextH);
+      }
+    }
+  }
+
   function setupCanvas() {
     if (!canvas) return;
-    /** Narrowed for nested handlers (TS closure analysis). */
     const c: HTMLCanvasElement = canvas;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    const g = ctx;
-    g.lineCap = "round";
-    g.lineJoin = "round";
-    g.lineWidth = 4;
-    g.strokeStyle = "#0a0a0a";
+    function getG() {
+      return c.getContext("2d");
+    }
+    const gInit = getG();
+    if (!gInit) return;
+    gInit.lineCap = "round";
+    gInit.lineJoin = "round";
+
+    brushSize = drawBrushSize
+      ? Math.max(1, Math.min(24, parseInt(drawBrushSize.value, 10) || 4))
+      : 4;
+    eraserSize = drawEraserSize
+      ? Math.max(2, Math.min(40, parseInt(drawEraserSize.value, 10) || 10))
+      : 10;
+    if (drawBrushSizeVal) drawBrushSizeVal.textContent = String(brushSize);
+    if (drawEraserSizeVal) drawEraserSizeVal.textContent = String(eraserSize);
+    if (drawColorCustom) {
+      drawColorCustom.value = brushColor;
+    }
+
+    function setSwatchPressed(el: HTMLElement | null) {
+      drawSwatches.forEach((sw) => {
+        sw.setAttribute("aria-pressed", el === sw ? "true" : "false");
+      });
+    }
+
+    drawSwatches.forEach((sw) => {
+      sw.addEventListener("click", () => {
+        const hex = sw.dataset.color;
+        if (!hex) return;
+        brushColor = hex;
+        if (drawColorCustom) drawColorCustom.value = hex;
+        setSwatchPressed(sw);
+      });
+    });
+    if (drawSwatches[0]) {
+      setSwatchPressed(drawSwatches[0]);
+    }
+    drawColorCustom?.addEventListener("input", () => {
+      brushColor = drawColorCustom.value;
+      setSwatchPressed(null);
+    });
+
+    drawBrushSize?.addEventListener("input", () => {
+      const v = parseInt(drawBrushSize.value, 10);
+      brushSize = Math.max(1, Math.min(24, Number.isFinite(v) ? v : 4));
+      if (drawBrushSizeVal) drawBrushSizeVal.textContent = String(brushSize);
+    });
+    drawEraserSize?.addEventListener("input", () => {
+      const v = parseInt(drawEraserSize.value, 10);
+      eraserSize = Math.max(2, Math.min(40, Number.isFinite(v) ? v : 10));
+      if (drawEraserSizeVal) drawEraserSizeVal.textContent = String(eraserSize);
+    });
 
     let last: { x: number; y: number } | null = null;
 
@@ -145,6 +257,15 @@ import WishCard from "./WishCard.astro";
 
     function start(e: PointerEvent) {
       if (!e.isPrimary) return;
+      if (selectedStickerId && composeBoard) {
+        const r = composeBoard.getBoundingClientRect();
+        const nx = (e.clientX - r.left) / r.width;
+        const ny = (e.clientY - r.top) / r.height;
+        makeComposeSticker(selectedStickerId, nx, ny);
+        clearStickerSelection();
+        e.preventDefault();
+        return;
+      }
       c.setPointerCapture(e.pointerId);
       isDrawing = true;
       hasInk = true;
@@ -153,14 +274,17 @@ import WishCard from "./WishCard.astro";
 
     function drawLine(e: PointerEvent) {
       if (!isDrawing || !last) return;
+      const g = getG();
+      if (!g) return;
       const p = pos(e);
       g.save();
+      g.lineWidth = drawingTool === "eraser" ? eraserSize : brushSize;
       if (drawingTool === "eraser") {
         g.globalCompositeOperation = "destination-out";
         g.strokeStyle = "rgba(0,0,0,1)";
       } else {
         g.globalCompositeOperation = "source-over";
-        g.strokeStyle = "#0a0a0a";
+        g.strokeStyle = brushColor;
       }
       g.beginPath();
       g.moveTo(last.x, last.y);
@@ -186,13 +310,25 @@ import WishCard from "./WishCard.astro";
     c.addEventListener("pointerup", end);
     c.addEventListener("pointercancel", end);
 
-    btnBrush?.addEventListener("click", () => setTool("brush"));
-    btnEraser?.addEventListener("click", () => setTool("eraser"));
+    btnBrush?.addEventListener("click", () => {
+      setTool("brush");
+    });
+    btnEraser?.addEventListener("click", () => {
+      setTool("eraser");
+    });
     btnClear?.addEventListener("click", () => {
-      g.clearRect(0, 0, c.width, c.height);
+      const g = getG();
+      g?.clearRect(0, 0, c.width, c.height);
       hasInk = false;
     });
     setTool("brush");
+    syncCanvasToLayout();
+    if (typeof ResizeObserver !== "undefined" && composeBoard) {
+      const ro = new ResizeObserver(() => {
+        syncCanvasToLayout();
+      });
+      ro.observe(composeBoard);
+    }
   }
 
   function getDrawingDataUrl(): string | null {
@@ -205,12 +341,33 @@ import WishCard from "./WishCard.astro";
   }
 
   function stickerSrcForId(id: string): string {
-    return `/stickers/${id}.png`;
+    return `/stickers/${id}.webp`;
   }
 
-  type Placement = { id: string; el: HTMLElement; x: number; y: number };
+  const STICKER_SCALE_MIN = 0.4;
+  const STICKER_SCALE_MAX = 2;
+  const STICKER_SCALE_STEP = 0.15;
+
+  type Placement = { id: string; el: HTMLElement; x: number; y: number; scale: number };
 
   const composePlacements: Placement[] = [];
+
+  function applyStickerTransform(el: HTMLElement, scale: number) {
+    el.dataset.stickerScale = String(scale);
+    el.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  }
+
+  function adjustStickerScale(stickerEl: HTMLElement, id: string, delta: number) {
+    const p = composePlacements.find((q) => q.el === stickerEl);
+    if (!p) return;
+    const next = Math.min(
+      STICKER_SCALE_MAX,
+      Math.max(STICKER_SCALE_MIN, p.scale + delta),
+    );
+    p.scale = next;
+    applyStickerTransform(stickerEl, next);
+    syncPlacementFromEl(stickerEl, id);
+  }
 
   function syncPlacementFromEl(el: HTMLElement, id: string) {
     if (!composeBoard) return;
@@ -227,29 +384,75 @@ import WishCard from "./WishCard.astro";
       p.x = x;
       p.y = y;
       p.id = id;
+      const sc = parseFloat(el.dataset.stickerScale || "1");
+      if (Number.isFinite(sc)) p.scale = sc;
     }
+  }
+
+  function removeComposeSticker(stickerEl: HTMLElement) {
+    const i = composePlacements.findIndex((p) => p.el === stickerEl);
+    if (i >= 0) composePlacements.splice(i, 1);
+    stickerEl.remove();
   }
 
   function makeComposeSticker(id: string, nx: number, ny: number) {
     if (!composeBoard) return;
+    const initialScale = 1;
     const el = document.createElement("div");
     el.className =
-      "compose-sticker absolute flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-grab items-center justify-center rounded border border-ink/20 bg-placeholder text-[8px] font-medium uppercase text-muted shadow-sm active:cursor-grabbing";
+      "compose-sticker group absolute z-20 flex h-11 w-11 cursor-grab items-center justify-center rounded border border-ink/20 bg-placeholder/80 shadow-sm backdrop-blur-[1px] active:cursor-grabbing";
     el.style.left = `${nx * 100}%`;
     el.style.top = `${ny * 100}%`;
     el.dataset.stickerId = id;
-    el.textContent = id.replace("sticker-", "");
+    applyStickerTransform(el, initialScale);
     const img = document.createElement("img");
     img.src = stickerSrcForId(id);
     img.alt = "";
     img.className =
-      "absolute inset-0 h-full w-full rounded object-contain p-0.5";
+      "pointer-events-none absolute inset-0 h-full w-full rounded object-contain p-0.5";
     img.onerror = () => {
       img.remove();
     };
-    el.insertBefore(img, el.firstChild);
+    const rm = document.createElement("button");
+    rm.type = "button";
+    rm.className =
+      "sticker-remove pointer-events-auto absolute -right-1.5 -top-1.5 z-[30] flex h-5 w-5 items-center justify-center rounded-full border border-ink/20 bg-page font-sans text-[10px] font-semibold leading-none text-ink/70 shadow";
+    rm.setAttribute("aria-label", "Remove sticker");
+    rm.textContent = "×";
+    rm.addEventListener("pointerdown", (e) => e.stopPropagation());
+    rm.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      removeComposeSticker(el);
+    });
+    const scaleRow = document.createElement("div");
+    scaleRow.className =
+      "sticker-scale-row pointer-events-auto absolute bottom-0 left-0 right-0 z-[30] flex items-center justify-center gap-0.5 pb-0.5";
+    const mkScaleBtn = (label: string, delta: number) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className =
+        "flex h-4 w-4 items-center justify-center rounded border border-ink/20 bg-page font-sans text-[10px] font-semibold leading-none text-ink/80 shadow-sm";
+      b.textContent = label;
+      b.setAttribute(
+        "aria-label",
+        delta < 0 ? "Shrink sticker" : "Grow sticker",
+      );
+      b.addEventListener("pointerdown", (e) => e.stopPropagation());
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        adjustStickerScale(el, id, delta);
+      });
+      return b;
+    };
+    scaleRow.appendChild(mkScaleBtn("−", -STICKER_SCALE_STEP));
+    scaleRow.appendChild(mkScaleBtn("+", STICKER_SCALE_STEP));
+    el.appendChild(img);
+    el.appendChild(rm);
+    el.appendChild(scaleRow);
     composeBoard.appendChild(el);
-    composePlacements.push({ id, el, x: nx, y: ny });
+    composePlacements.push({ id, el, x: nx, y: ny, scale: initialScale });
     dragSticker(el, id);
   }
 
@@ -260,6 +463,10 @@ import WishCard from "./WishCard.astro";
     let origTop = 0;
     el.addEventListener("pointerdown", (e) => {
       if (!composeBoard || e.button !== 0) return;
+      const t = e.target as HTMLElement;
+      if (t.closest?.(".sticker-remove") || t.closest?.(".sticker-scale-row")) {
+        return;
+      }
       e.stopPropagation();
       el.setPointerCapture(e.pointerId);
       const r = composeBoard.getBoundingClientRect();
@@ -288,25 +495,24 @@ import WishCard from "./WishCard.astro";
     });
   }
 
-  function setupComposeBoard() {
-    if (!composeBoard) return;
-    composeBoard.addEventListener("pointerdown", (e) => {
-      if (e.target !== composeBoard || !selectedStickerId) return;
-      const r = composeBoard.getBoundingClientRect();
-      const nx = (e.clientX - r.left) / r.width;
-      const ny = (e.clientY - r.top) / r.height;
-      makeComposeSticker(selectedStickerId, nx, ny);
-    });
-  }
-
   function setupPicker() {
     document.querySelectorAll(".sticker-choice").forEach((btn) => {
       btn.addEventListener("click", () => {
+        const el = btn as HTMLElement;
+        const id = el.dataset.stickerId ?? null;
+        const isToggleOff =
+          id !== null &&
+          selectedStickerId === id &&
+          el.classList.contains("ring-2");
         document.querySelectorAll(".sticker-choice").forEach((b) => {
           b.classList.remove("ring-2", "ring-ink", "ring-offset-2");
         });
-        btn.classList.add("ring-2", "ring-ink", "ring-offset-2");
-        selectedStickerId = (btn as HTMLElement).dataset.stickerId ?? null;
+        if (isToggleOff) {
+          selectedStickerId = null;
+          return;
+        }
+        el.classList.add("ring-2", "ring-ink", "ring-offset-2");
+        selectedStickerId = id;
       });
     });
   }
@@ -352,11 +558,14 @@ import WishCard from "./WishCard.astro";
     if (stickerRegion && w.stickers?.length) {
       stickerRegion.innerHTML = "";
       for (const s of w.stickers) {
+        const sc =
+          typeof s.scale === "number" && Number.isFinite(s.scale) ? s.scale : 1;
         const mark = document.createElement("div");
         mark.className =
-          "absolute h-6 w-6 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded border border-ink/15 bg-shell";
+          "absolute h-6 w-6 overflow-hidden rounded border border-ink/15 bg-shell";
         mark.style.left = `${s.x * 100}%`;
         mark.style.top = `${s.y * 100}%`;
+        mark.style.transform = `translate(-50%, -50%) scale(${sc})`;
         const im = document.createElement("img");
         im.src = stickerSrcForId(s.id);
         im.alt = "";
@@ -400,8 +609,16 @@ import WishCard from "./WishCard.astro";
     }
   }
 
-  function collectStickers(): { id: string; x: number; y: number }[] {
-    return composePlacements.map((p) => ({ id: p.id, x: p.x, y: p.y }));
+  function collectStickers(): { id: string; x: number; y: number; scale?: number }[] {
+    return composePlacements.map((p) => {
+      const o: { id: string; x: number; y: number; scale?: number } = {
+        id: p.id,
+        x: p.x,
+        y: p.y,
+      };
+      if (p.scale < 0.99 || p.scale > 1.01) o.scale = p.scale;
+      return o;
+    });
   }
 
   function resetCompose() {
@@ -469,7 +686,6 @@ import WishCard from "./WishCard.astro";
   }
 
   setupCanvas();
-  setupComposeBoard();
   setupPicker();
   setupForm();
   void loadWishes();
