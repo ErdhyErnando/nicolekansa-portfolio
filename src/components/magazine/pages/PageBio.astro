@@ -3,16 +3,22 @@
 ---
 
 <div
-  class="flex h-full flex-col bg-page p-8 text-ink"
-  style="min-height: 100%;"
+  class="box-border flex h-full min-h-0 w-full max-w-full flex-col overflow-y-auto overflow-x-hidden bg-page p-4 text-ink sm:p-6 md:p-8"
+  style="min-height: 100%; -webkit-overflow-scrolling: touch;"
 >
   <p
-    class="font-sans text-[10px] font-medium tracking-[0.25em] text-muted uppercase"
+    class="shrink-0 font-sans text-[10px] font-medium tracking-[0.25em] text-muted uppercase"
   >
     Profile
   </p>
-  <h2 class="font-display mt-2 text-3xl font-semibold">Nicole Kansa</h2>
-  <p class="mt-6 font-sans text-sm leading-relaxed text-ink/90">
+  <h2
+    class="font-display mt-1 shrink-0 text-2xl font-semibold sm:mt-2 sm:text-3xl"
+  >
+    Nicole Kansa
+  </h2>
+  <p
+    class="mt-3 shrink-0 font-sans text-xs leading-relaxed text-ink/90 sm:mt-6 sm:text-sm"
+  >
     Business Administration graduate with a lifelong fascination for fashion,
     now fully embraced as a creative pursuit. Drawn to modeling since her early
     teens, she brings an intuitive ease to both the runway and the lens,
@@ -22,23 +28,23 @@
     clear vision for the journey ahead.
   </p>
   <dl
-    class="mt-10 space-y-3 border-t border-ink/10 pt-8 font-sans text-xs tracking-wide"
+    class="mt-6 min-w-0 space-y-2 border-t border-ink/10 pt-4 font-sans text-[11px] tracking-wide sm:mt-8 sm:space-y-3 sm:pt-8 sm:text-xs"
   >
-    <div class="flex justify-between gap-4">
-      <dt class="text-muted uppercase">Height</dt>
-      <dd class="font-medium">170 cm</dd>
+    <div class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+      <dt class="shrink-0 text-muted uppercase">Height</dt>
+      <dd class="min-w-0 text-right font-medium">170 cm</dd>
     </div>
-    <div class="flex justify-between gap-4">
-      <dt class="text-muted uppercase">Weight</dt>
-      <dd class="font-medium">58 kg</dd>
+    <div class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+      <dt class="shrink-0 text-muted uppercase">Weight</dt>
+      <dd class="min-w-0 text-right font-medium">58 kg</dd>
     </div>
-    <div class="flex justify-between gap-4">
-      <dt class="text-muted uppercase">Age</dt>
-      <dd class="font-medium">24</dd>
+    <div class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+      <dt class="shrink-0 text-muted uppercase">Age</dt>
+      <dd class="min-w-0 text-right font-medium">24</dd>
     </div>
-    <div class="flex justify-between gap-4">
-      <dt class="text-muted uppercase">Based</dt>
-      <dd class="font-medium">Bogor, Indonesia</dd>
+    <div class="flex min-w-0 flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
+      <dt class="shrink-0 text-muted uppercase">Based</dt>
+      <dd class="min-w-0 text-right font-medium wrap-break-word">Bogor, Indonesia</dd>
     </div>
   </dl>
 </div>
