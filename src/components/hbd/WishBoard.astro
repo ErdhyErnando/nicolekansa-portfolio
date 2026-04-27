@@ -564,7 +564,7 @@ import WishCard from "./WishCard.astro";
     card.addEventListener("pointerdown", (e) => {
       if (!pinboard || !e.isPrimary || e.button !== 0) return;
       bringWishCardToFront(card);
-      card.classList.add("cursor-grabbing", "select-none");
+      card.classList.add("cursor-grabbing", "select-none", "touch-none");
       card.setPointerCapture(e.pointerId);
       const pr = pinboard.getBoundingClientRect();
       const er = card.getBoundingClientRect();
@@ -592,7 +592,7 @@ import WishCard from "./WishCard.astro";
     function endDrag(e: PointerEvent) {
       if (!card.hasPointerCapture(e.pointerId)) return;
       card.releasePointerCapture(e.pointerId);
-      card.classList.remove("cursor-grabbing", "select-none");
+      card.classList.remove("cursor-grabbing", "select-none", "touch-none");
       requestAnimationFrame(() => syncPinboardHeight());
     }
 
@@ -600,7 +600,11 @@ import WishCard from "./WishCard.astro";
     card.addEventListener("pointercancel", endDrag);
   }
 
-  /** Absolute % positions don’t affect pinboard flow height; resize until layout stabilizes. */
+  /**
+   * Cards use % top/height, so changing minHeight shifts layout. At most two
+   * measure→write passes sync; a third runs next frame if still short (avoids
+   * long read/write loops in one frame).
+   */
   function syncPinboardHeight() {
     if (!pinboard) return;
     const cards = pinboard.querySelectorAll(".wish-card");
@@ -608,22 +612,31 @@ import WishCard from "./WishCard.astro";
       pinboard.style.minHeight = "";
       return;
     }
-    let prevNeed = -1;
-    for (let i = 0; i < 12; i++) {
-      const pr = pinboard.getBoundingClientRect();
+
+    const measureNeed = (): number => {
+      const pr = pinboard!.getBoundingClientRect();
       let maxBottom = 0;
       cards.forEach((el) => {
         const r = el.getBoundingClientRect();
         maxBottom = Math.max(maxBottom, r.bottom - pr.top);
       });
-      const need = Math.max(
+      return Math.max(
         PINBOARD_MIN_PX,
         Math.ceil(maxBottom + PINBOARD_BOTTOM_PAD),
       );
-      pinboard.style.minHeight = `${need}px`;
-      if (i > 0 && Math.abs(need - prevNeed) < 3) break;
-      prevNeed = need;
-    }
+    };
+
+    let need = measureNeed();
+    pinboard.style.minHeight = `${need}px`;
+    const afterGrow = measureNeed();
+    if (afterGrow <= need + 1) return;
+    pinboard.style.minHeight = `${afterGrow}px`;
+    requestAnimationFrame(() => {
+      const finalNeed = measureNeed();
+      if (finalNeed > afterGrow + 1) {
+        pinboard!.style.minHeight = `${finalNeed}px`;
+      }
+    });
   }
 
   function renderWishCard(w: WishRecord, index: number) {
@@ -700,7 +713,12 @@ import WishCard from "./WishCard.astro";
 
     dragWishCard(node);
     node.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
+      if (
+        e.key === "Enter" ||
+        e.key === " " ||
+        e.code === "Space" ||
+        e.code === "Spacebar"
+      ) {
         e.preventDefault();
         bringWishCardToFront(node);
       }
