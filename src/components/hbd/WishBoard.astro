@@ -531,6 +531,9 @@ import WishCard from "./WishCard.astro";
 
   const PINBOARD_MIN_PX = 420;
   const PINBOARD_BOTTOM_PAD = 40;
+  /** Pixel row step for auto-placed cards (avoid % `top`, which rescales when minHeight grows). */
+  const CARD_GRID_TOP_START_PX = 16;
+  const CARD_ROW_STEP_PX = 240;
 
   /** Each tap raises z-index so overlapped text/stickers can be read (starts above pinboard empty hint). */
   let wishCardZCounter = 50;
@@ -586,7 +589,7 @@ import WishCard from "./WishCard.astro";
       newLeft = Math.max(0, Math.min(maxLeft, newLeft));
       newTop = Math.max(0, Math.min(maxTop, newTop));
       card.style.left = `${(newLeft / pr.width) * 100}%`;
-      card.style.top = `${(newTop / pr.height) * 100}%`;
+      card.style.top = `${newTop}px`;
     });
 
     function endDrag(e: PointerEvent) {
@@ -601,9 +604,9 @@ import WishCard from "./WishCard.astro";
   }
 
   /**
-   * Cards use % top/height, so changing minHeight shifts layout. At most two
-   * measure→write passes sync; a third runs next frame if still short (avoids
-   * long read/write loops in one frame).
+   * Expand pinboard so absolutely positioned cards are not clipped. Card `top`
+   * is in px (and drag writes px `top`) so growing minHeight does not rescale
+   * vertical positions and blow up layout.
    */
   function syncPinboardHeight() {
     if (!pinboard) return;
@@ -650,7 +653,7 @@ import WishCard from "./WishCard.astro";
     const col = index % cols;
     const row = Math.floor(index / cols);
     node.style.left = `${6 + col * 30}%`;
-    node.style.top = `${4 + row * 30}%`;
+    node.style.top = `${CARD_GRID_TOP_START_PX + row * CARD_ROW_STEP_PX}px`;
     node.style.zIndex = String(10 + index);
     node.style.setProperty("--rot", `${((index % 5) - 2) * 1.8}deg`);
     node.setAttribute(
