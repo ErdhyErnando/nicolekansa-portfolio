@@ -38,11 +38,11 @@ import WishCard from "./WishCard.astro";
     class="mx-auto mt-10 grid max-w-6xl gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start"
   >
     <section
-      class="relative min-h-[420px] overflow-hidden rounded-2xl border border-ink/10 bg-page shadow-inner"
+      class="relative min-h-[420px] rounded-2xl border border-ink/10 bg-page shadow-inner"
     >
       <div
         id="wish-pinboard"
-        class="relative min-h-[420px] w-full bg-[#f3f0eb]"
+        class="relative min-h-[420px] w-full bg-[#f3f0eb] pb-8"
         aria-label="Wish board"
       >
         <p
@@ -529,6 +529,103 @@ import WishCard from "./WishCard.astro";
     }
   }
 
+  const PINBOARD_MIN_PX = 420;
+  const PINBOARD_BOTTOM_PAD = 40;
+
+  /** Each tap raises z-index so overlapped text/stickers can be read (starts above pinboard empty hint). */
+  let wishCardZCounter = 50;
+
+  function bringWishCardToFront(card: HTMLElement) {
+    if (!pinboard) return;
+    pinboard.querySelectorAll(".wish-card").forEach((el) => {
+      el.classList.remove(
+        "ring-2",
+        "ring-ink/35",
+        "shadow-lg",
+        "brightness-[1.02]",
+      );
+    });
+    wishCardZCounter += 1;
+    card.style.zIndex = String(wishCardZCounter);
+    card.classList.add(
+      "ring-2",
+      "ring-ink/35",
+      "shadow-lg",
+      "brightness-[1.02]",
+    );
+  }
+
+  function dragWishCard(card: HTMLElement) {
+    let startX = 0;
+    let startY = 0;
+    let origLeftPx = 0;
+    let origTopPx = 0;
+
+    card.addEventListener("pointerdown", (e) => {
+      if (!pinboard || !e.isPrimary || e.button !== 0) return;
+      bringWishCardToFront(card);
+      card.classList.add("cursor-grabbing", "select-none");
+      card.setPointerCapture(e.pointerId);
+      const pr = pinboard.getBoundingClientRect();
+      const er = card.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      origLeftPx = er.left - pr.left;
+      origTopPx = er.top - pr.top;
+    });
+
+    card.addEventListener("pointermove", (e) => {
+      if (!pinboard || !card.hasPointerCapture(e.pointerId)) return;
+      const pr = pinboard.getBoundingClientRect();
+      const w = card.offsetWidth;
+      const h = card.offsetHeight;
+      const maxLeft = Math.max(0, pr.width - w);
+      const maxTop = Math.max(0, pr.height - h);
+      let newLeft = origLeftPx + (e.clientX - startX);
+      let newTop = origTopPx + (e.clientY - startY);
+      newLeft = Math.max(0, Math.min(maxLeft, newLeft));
+      newTop = Math.max(0, Math.min(maxTop, newTop));
+      card.style.left = `${(newLeft / pr.width) * 100}%`;
+      card.style.top = `${(newTop / pr.height) * 100}%`;
+    });
+
+    function endDrag(e: PointerEvent) {
+      if (!card.hasPointerCapture(e.pointerId)) return;
+      card.releasePointerCapture(e.pointerId);
+      card.classList.remove("cursor-grabbing", "select-none");
+      requestAnimationFrame(() => syncPinboardHeight());
+    }
+
+    card.addEventListener("pointerup", endDrag);
+    card.addEventListener("pointercancel", endDrag);
+  }
+
+  /** Absolute % positions don’t affect pinboard flow height; resize until layout stabilizes. */
+  function syncPinboardHeight() {
+    if (!pinboard) return;
+    const cards = pinboard.querySelectorAll(".wish-card");
+    if (cards.length === 0) {
+      pinboard.style.minHeight = "";
+      return;
+    }
+    let prevNeed = -1;
+    for (let i = 0; i < 12; i++) {
+      const pr = pinboard.getBoundingClientRect();
+      let maxBottom = 0;
+      cards.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        maxBottom = Math.max(maxBottom, r.bottom - pr.top);
+      });
+      const need = Math.max(
+        PINBOARD_MIN_PX,
+        Math.ceil(maxBottom + PINBOARD_BOTTOM_PAD),
+      );
+      pinboard.style.minHeight = `${need}px`;
+      if (i > 0 && Math.abs(need - prevNeed) < 3) break;
+      prevNeed = need;
+    }
+  }
+
   function renderWishCard(w: WishRecord, index: number) {
     if (!pinboard || !template) return;
     const node = template.content.firstElementChild?.cloneNode(
@@ -541,7 +638,12 @@ import WishCard from "./WishCard.astro";
     const row = Math.floor(index / cols);
     node.style.left = `${6 + col * 30}%`;
     node.style.top = `${4 + row * 30}%`;
+    node.style.zIndex = String(10 + index);
     node.style.setProperty("--rot", `${((index % 5) - 2) * 1.8}deg`);
+    node.setAttribute(
+      "aria-label",
+      `Wish from ${w.name}. Drag to move on the board. Tap or press Enter to bring to front.`,
+    );
 
     const nameEl = node.querySelector(".wish-card-name");
     const timeEl = node.querySelector(".wish-card-time");
@@ -587,7 +689,22 @@ import WishCard from "./WishCard.astro";
     if (drawEl && w.drawing) {
       drawEl.src = w.drawing;
       drawEl.classList.remove("hidden");
+      drawEl.addEventListener(
+        "load",
+        () => {
+          requestAnimationFrame(() => syncPinboardHeight());
+        },
+        { once: true },
+      );
     }
+
+    dragWishCard(node);
+    node.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        bringWishCardToFront(node);
+      }
+    });
 
     pinboard.appendChild(node);
   }
@@ -604,6 +721,9 @@ import WishCard from "./WishCard.astro";
       }
       emptyHint?.classList.add("hidden");
       data.forEach((w, i) => renderWishCard(w, i));
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => syncPinboardHeight());
+      });
     } catch {
       emptyHint?.classList.remove("hidden");
     }
@@ -689,4 +809,10 @@ import WishCard from "./WishCard.astro";
   setupPicker();
   setupForm();
   void loadWishes();
+
+  let resizeT: ReturnType<typeof setTimeout> | undefined;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => syncPinboardHeight(), 120);
+  });
 </script>
